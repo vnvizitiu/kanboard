@@ -1,9 +1,41 @@
-Version 1.0.33 (unreleased)
+Version 1.0.34
 --------------
 
 New features:
 
-* Move a task without drag and drop (mobiles)
+* Custom project roles with configurable restrictions
+* Duplicate a task to multiple projects during creation
+* New automatic action:
+    - Close a task in a specific column when not moved during a given period
+
+Improvements:
+
+* Do not close the popover when clicking on the background
+* Add visual icon to show a dropdown action on task
+* Avoid 'blur' effect on popover
+* Accept more file types for external links
+* Restrict search to active projects
+* Improve task status filter
+* Add filter tag:none
+* Always apply merge hooks in task creation controller
+* Update task moved date only when the column or swimlane is changed
+* Add new subtask hooks
+* Add the actual use of TaskStartDateFilter
+* Update translations and documentation
+
+Bug fixes:
+
+* Send absolute links in email notifications
+* Restrict task complexity to a specific range to avoid integer overflow
+* Do not show closed tasks in task move position form
+* Avoid "Controller not found" in Settings > Links
+
+Version 1.0.33
+--------------
+
+New features:
+
+* Move a task without drag and drop (smartphones and tablets)
 * Add the possibility to unlock users from the user interface
 * New API calls for task metadata
 * New automatic actions:
@@ -13,6 +45,7 @@ New features:
 Improvements:
 
 * Introduce Vue.js to manage user interface components
+* Add column "Reference" and "Creator Name" in CSV task export
 * Show both time spent and estimated on the board
 * Store board collapsed mode user preference in the database
 * Store comment sorting direction in the database
@@ -23,6 +56,9 @@ Improvements:
 * Add "reference" hooks
 * Show project name in task forms
 * Convert vanilla CSS to SASS
+* Make user interface more responsive for smartphones and tablets
+* Support version operators for plugin directory: >= and >
+* Update Spanish documentation
 
 Other changes:
 
@@ -30,6 +66,7 @@ Other changes:
 
 Bug fixes:
 
+* Fix improper HTML escaping for textarea (potential XSS)
 * Do not show closed tasks on public boards
 * Fix undefined constant in config example file
 * Fix PHP notice when sending overdue notifications

@@ -98,6 +98,7 @@ Contributors:
 - [Oliver Jakoubek](https://github.com/jakoubek)
 - [Olivier Maridat](https://github.com/oliviermaridat)
 - [Oren Ben-Kiki](https://github.com/orenbenkiki)
+- [Patrick Keil](https://github.com/Soily)
 - [Patrick Van Elk](https://github.com/patrickvanelk)
 - Paolo Mainieri
 - [Pavel Roušar](https://github.com/rousarp)
@@ -118,6 +119,7 @@ Contributors:
 - [Sebastian Reese](https://github.com/ReeseSebastian)
 - [Semyon Novikov](https://github.com/semka)
 - [StavrosKa](https://github.com/StavrosKa)
+- [Stefan](https://github.com/spst)
 - [Sylvain Veyrié](https://github.com/turb)
 - [Thomas Lutz](https://github.com/phoen1x)
 - [Thomas Stinner](https://github.com/stinnux)

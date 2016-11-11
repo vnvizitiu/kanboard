@@ -13,10 +13,6 @@ Kanboard.Popover.prototype.listen = function() {
         self.close(e);
     });
 
-    $(document).on("click", "#popover-container", function(e) {
-        self.close(e);
-    });
-
     $(document).on("click", "#popover-content", function(e) {
         e.stopPropagation();
     });
@@ -141,7 +137,7 @@ Kanboard.Popover.prototype.afterOpen = function() {
     });
 
     // Autofocus fields (html5 autofocus works only with page onload)
-    $("[autofocus]").each(function() {
+    $("#popover-content input[autofocus]").each(function() {
         $(this).focus();
     });
 

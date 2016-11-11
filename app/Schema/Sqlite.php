@@ -6,7 +6,73 @@ use Kanboard\Core\Security\Token;
 use Kanboard\Core\Security\Role;
 use PDO;
 
-const VERSION = 103;
+const VERSION = 107;
+
+function version_107(PDO $pdo)
+{
+    $pdo->exec("ALTER TABLE tasks ADD COLUMN external_provider TEXT");
+    $pdo->exec("ALTER TABLE tasks ADD COLUMN external_uri TEXT");
+}
+
+function version_106(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE column_has_restrictions (
+            restriction_id INTEGER PRIMARY KEY,
+            project_id INTEGER NOT NULL,
+            role_id INTEGER NOT NULL,
+            column_id INTEGER NOT NULL,
+            rule VARCHAR(255) NOT NULL,
+            UNIQUE(role_id, column_id, rule),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(role_id) REFERENCES project_has_roles(role_id) ON DELETE CASCADE,
+            FOREIGN KEY(column_id) REFERENCES columns(id) ON DELETE CASCADE
+        )
+    ");
+}
+
+function version_105(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE project_role_has_restrictions (
+            restriction_id INTEGER PRIMARY KEY,
+            project_id INTEGER NOT NULL,
+            role_id INTEGER NOT NULL,
+            rule VARCHAR(255) NOT NULL,
+            UNIQUE(role_id, rule),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(role_id) REFERENCES project_has_roles(role_id) ON DELETE CASCADE
+        )
+    ");
+}
+
+function version_104(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE project_has_roles (
+            role_id INTEGER PRIMARY KEY,
+            role TEXT NOT NULL,
+            project_id INTEGER NOT NULL,
+            UNIQUE(project_id, role),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+        )
+    ");
+
+    $pdo->exec("
+        CREATE TABLE column_has_move_restrictions (
+            restriction_id INTEGER PRIMARY KEY,
+            project_id INTEGER NOT NULL,
+            role_id INTEGER NOT NULL,
+            src_column_id INTEGER NOT NULL,
+            dst_column_id INTEGER NOT NULL,
+            UNIQUE(role_id, src_column_id, dst_column_id),
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY(role_id) REFERENCES project_has_roles(role_id) ON DELETE CASCADE,
+            FOREIGN KEY(src_column_id) REFERENCES columns(id) ON DELETE CASCADE,
+            FOREIGN KEY(dst_column_id) REFERENCES columns(id) ON DELETE CASCADE
+        )
+    ");
+}
 
 function version_103(PDO $pdo)
 {

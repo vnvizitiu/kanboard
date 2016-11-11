@@ -2,6 +2,10 @@
 
 namespace Kanboard\Controller;
 
+use Kanboard\Core\Controller\AccessForbiddenException;
+use Kanboard\Core\ExternalTask\AccessForbiddenException as ExternalTaskAccessForbiddenException;
+use Kanboard\Core\ExternalTask\ExternalTaskException;
+
 /**
  * Task Modification controller
  *
@@ -37,10 +41,13 @@ class TaskModificationController extends BaseController
         $project = $this->projectModel->getById($task['project_id']);
 
         if (empty($values)) {
-            $values = $this->prepareValues($task);
+            $values = $task;
         }
 
-        $this->response->html($this->template->render('task_modification/show', array(
+        $values = $this->hook->merge('controller:task:form:default', $values, array('default_values' => $values));
+        $values = $this->hook->merge('controller:task-modification:form:default', $values, array('default_values' => $values));
+
+        $params = array(
             'project' => $project,
             'values' => $values,
             'errors' => $errors,
@@ -48,7 +55,29 @@ class TaskModificationController extends BaseController
             'tags' => $this->taskTagModel->getList($task['id']),
             'users_list' => $this->projectUserRoleModel->getAssignableUsersList($task['project_id']),
             'categories_list' => $this->categoryModel->getList($task['project_id']),
-        )));
+        );
+
+        $this->renderTemplate($task, $params);
+    }
+
+    protected function renderTemplate(array &$task, array &$params)
+    {
+        if (empty($task['external_uri'])) {
+            $this->response->html($this->template->render('task_modification/show', $params));
+        } else {
+
+            try {
+                $taskProvider = $this->externalTaskManager->getProvider($task['external_provider']);
+                $params['template'] = $taskProvider->getModificationFormTemplate();
+                $params['external_task'] = $taskProvider->fetch($task['external_uri']);
+            } catch (ExternalTaskAccessForbiddenException $e) {
+                throw new AccessForbiddenException($e->getMessage());
+            } catch (ExternalTaskException $e) {
+                $params['error_message'] = $e->getMessage();
+            }
+
+            $this->response->html($this->template->render('external_task_modification/show', $params));
+        }
     }
 
     /**
@@ -63,7 +92,7 @@ class TaskModificationController extends BaseController
 
         list($valid, $errors) = $this->taskValidator->validateModification($values);
 
-        if ($valid && $this->taskModificationModel->update($values)) {
+        if ($valid && $this->updateTask($task, $values, $errors)) {
             $this->flash->success(t('Task updated successfully.'));
             $this->response->redirect($this->helper->url->to('TaskViewController', 'show', array('project_id' => $task['project_id'], 'task_id' => $task['id'])), true);
         } else {
@@ -72,18 +101,22 @@ class TaskModificationController extends BaseController
         }
     }
 
-    /**
-     * Prepare form values
-     *
-     * @access protected
-     * @param  array $task
-     * @return array
-     */
-    protected function prepareValues(array $task)
+    protected function updateTask(array &$task, array &$values, array &$errors)
     {
-        $values = $task;
-        $values = $this->hook->merge('controller:task:form:default', $values, array('default_values' => $values));
-        $values = $this->hook->merge('controller:task-modification:form:default', $values, array('default_values' => $values));
-        return $values;
+        $result = $this->taskModificationModel->update($values);
+
+        if ($result && ! empty($task['external_uri'])) {
+            try {
+                $taskProvider = $this->externalTaskManager->getProvider($task['external_provider']);
+                $result = $taskProvider->save($task['external_uri'], $values, $errors);
+            } catch (ExternalTaskAccessForbiddenException $e) {
+                throw new AccessForbiddenException($e->getMessage());
+            } catch (ExternalTaskException $e) {
+                $this->logger->error($e->getMessage());
+                $result = false;
+            }
+        }
+
+        return $result;
     }
 }
