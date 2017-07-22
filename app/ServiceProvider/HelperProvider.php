@@ -19,9 +19,9 @@ class HelperProvider implements ServiceProviderInterface
     {
         $container['helper'] = new Helper($container);
         $container['helper']->register('app', '\Kanboard\Helper\AppHelper');
-        $container['helper']->register('calendar', '\Kanboard\Helper\CalendarHelper');
         $container['helper']->register('asset', '\Kanboard\Helper\AssetHelper');
         $container['helper']->register('board', '\Kanboard\Helper\BoardHelper');
+        $container['helper']->register('comment', '\Kanboard\Helper\CommentHelper');
         $container['helper']->register('dt', '\Kanboard\Helper\DateHelper');
         $container['helper']->register('file', '\Kanboard\Helper\FileHelper');
         $container['helper']->register('form', '\Kanboard\Helper\FormHelper');
@@ -39,6 +39,7 @@ class HelperProvider implements ServiceProviderInterface
         $container['helper']->register('projectHeader', '\Kanboard\Helper\ProjectHeaderHelper');
         $container['helper']->register('projectActivity', '\Kanboard\Helper\ProjectActivityHelper');
         $container['helper']->register('mail', '\Kanboard\Helper\MailHelper');
+        $container['helper']->register('modal', '\Kanboard\Helper\ModalHelper');
 
         $container['template'] = new Template($container['helper']);
 

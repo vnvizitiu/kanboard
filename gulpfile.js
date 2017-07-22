@@ -3,11 +3,15 @@ var concat = require('gulp-concat');
 var bower = require('gulp-bower');
 var uglify = require('gulp-uglify');
 var sass = require('gulp-sass');
-var strip = require('gulp-strip-comments');
 
 var src = {
     js: [
+        'node_modules/textarea-caret/index.js',
+        'assets/js/polyfills/*.js',
+        'assets/js/core/base.js',
+        'assets/js/core/!(base|bootstrap)*.js',
         'assets/js/components/*.js',
+        'assets/js/core/bootstrap.js',
         'assets/js/src/Namespace.js',
         'assets/js/src/!(Namespace|Bootstrap|BoardDragAndDrop)*.js',
         'assets/js/src/BoardDragAndDrop.js',
@@ -19,10 +23,7 @@ var vendor = {
     css: [
         'bower_components/jquery-ui/themes/base/jquery-ui.min.css',
         'bower_components/jqueryui-timepicker-addon/dist/jquery-ui-timepicker-addon.min.css',
-        'bower_components/chosen/chosen.css',
         'bower_components/select2/dist/css/select2.min.css',
-        'bower_components/fullcalendar/dist/fullcalendar.min.css',
-        'bower_components/simplemde/dist/simplemde.min.css',
         'bower_components/font-awesome/css/font-awesome.min.css',
         'bower_components/c3/c3.min.css'
     ],
@@ -32,6 +33,7 @@ var vendor = {
         'bower_components/jquery-ui/ui/minified/core.min.js',
         'bower_components/jquery-ui/ui/minified/autocomplete.min.js',
         'bower_components/jquery-ui/ui/minified/datepicker.min.js',
+        'bower_components/jquery-ui/ui/minified/i18n/*.js',
         'bower_components/jquery-ui/ui/minified/draggable.min.js',
         'bower_components/jquery-ui/ui/minified/droppable.min.js',
         'bower_components/jquery-ui/ui/minified/resizable.min.js',
@@ -41,17 +43,11 @@ var vendor = {
         'bower_components/jqueryui-timepicker-addon/dist/jquery-ui-timepicker-addon.min.js',
         'bower_components/jqueryui-timepicker-addon/dist/i18n/jquery-ui-timepicker-addon-i18n.min.js',
         'bower_components/jqueryui-touch-punch/jquery.ui.touch-punch.min.js',
-        'bower_components/chosen/chosen.jquery.js',
         'bower_components/select2/dist/js/select2.min.js',
-        'bower_components/moment/min/moment-with-locales.min.js',
-        'bower_components/fullcalendar/dist/fullcalendar.min.js',
-        'bower_components/fullcalendar/dist/lang-all.js',
-        'bower_components/mousetrap/mousetrap.min.js',
-        'bower_components/mousetrap/plugins/global-bind/mousetrap-global-bind.min.js',
-        'bower_components/simplemde/dist/simplemde.min.js',
         'bower_components/d3/d3.min.js',
         'bower_components/c3/c3.min.js',
-        'bower_components/isMobile/isMobile.min.js'
+        'bower_components/isMobile/isMobile.min.js',
+        'bower_components/marked/marked.min.js'
     ]
 };
 
@@ -67,13 +63,6 @@ gulp.task('bower', function() {
 });
 
 gulp.task('vendor', function() {
-    gulp.src('node_modules/vue/dist/vue.min.js')
-        .pipe(strip({trim: true}))
-        .pipe(gulp.dest('node_modules/vue/dist/'))
-    ;
-
-    vendor.js.push('node_modules/vue/dist/vue.min.js');
-
     gulp.src(vendor.js)
         .pipe(concat('vendor.min.js'))
         .pipe(gulp.dest(dist.js))
@@ -89,9 +78,6 @@ gulp.task('vendor', function() {
 
     gulp.src('bower_components/jquery-ui/themes/base/images/*')
         .pipe(gulp.dest(dist.css + 'images/'));
-
-    gulp.src('bower_components/chosen/*.png')
-        .pipe(gulp.dest(dist.css + ''));
 });
 
 gulp.task('js', function() {

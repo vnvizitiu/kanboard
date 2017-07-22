@@ -64,7 +64,7 @@ class DateParserTest extends Base
         $dates = $dateParser->getDateTimeFormats(true);
         $this->assertEquals('m/d/Y H:i', $dates[0]);
 
-        $this->container['configModel']->save(array('application_datetime_format' => 'd/m/Y g:i a'));
+        $this->container['configModel']->save(array('application_date_format' => 'd/m/Y', 'application_time_format' => 'g:i a'));
         $this->container['memoryCache']->flush();
 
         $dates = $dateParser->getDateTimeFormats();
@@ -121,7 +121,7 @@ class DateParserTest extends Base
     {
         $this->container['configModel']->save(array(
             'application_date_format' => 'd/m/Y',
-            'application_datetime_format' => 'd/m/Y g:i a',
+            'application_time_format' => 'g:i a',
         ));
 
         $dateParser = new DateParser($this->container);
@@ -138,7 +138,7 @@ class DateParserTest extends Base
     {
         $this->container['configModel']->save(array(
             'application_date_format' => 'd.m.Y',
-            'application_datetime_format' => 'd.m.Y H:i',
+            'application_time_format' => 'H:i',
         ));
 
         $dateParser = new DateParser($this->container);
@@ -204,9 +204,6 @@ class DateParserTest extends Base
 
         $this->assertEquals(array('date' => '06/02/2016'), $dateParser->format($values, array('date'), 'd/m/Y'));
         $this->assertEquals(array('date' => '02/06/2016 7:30 pm'), $dateParser->format($values, array('date'), 'm/d/Y g:i a'));
-
-        $values['date'] = '2016-02-06';
-        $this->assertEquals(array('date' => '06/02/2016'), $dateParser->format($values, array('date'), 'd/m/Y'));
     }
 
     public function testConvert()

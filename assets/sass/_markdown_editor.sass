@@ -1,15 +1,22 @@
-.markdown-editor-container
-  max-width: 400px
+@import variables
 
-div
-  &.CodeMirror, &.CodeMirror-scroll
-    max-height: 250px
-    min-height: 200px
-
-.markdown-editor-small div
-  &.CodeMirror, &.CodeMirror-scroll
-    min-height: 100px
-    max-height: 180px
-
-.form-column div.CodeMirror
-  margin-bottom: 10px
+.text-editor
+  margin-top: 10px
+  a
+    font-size: size('normal')
+    color: color('light')
+    text-decoration: none
+    margin-right: 10px
+    &:hover
+      color: link-color('primary')
+  .text-editor-preview-area
+    border: 1px solid color('lighter')
+    width: 700px
+    max-width: 99%
+    height: 250px
+    overflow: auto
+    padding: 2px
+  textarea
+    width: 700px
+    max-width: 98%
+    height: 250px

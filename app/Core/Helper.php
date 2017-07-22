@@ -12,13 +12,15 @@ use Pimple\Container;
  *
  * @property \Kanboard\Helper\AppHelper               $app
  * @property \Kanboard\Helper\AssetHelper             $asset
+ * @property \Kanboard\Helper\AvatarHelper            $avatar
  * @property \Kanboard\Helper\BoardHelper             $board
- * @property \Kanboard\Helper\CalendarHelper          $calendar
+ * @property \Kanboard\Helper\CommentHelper           $comment
  * @property \Kanboard\Helper\DateHelper              $dt
  * @property \Kanboard\Helper\FileHelper              $file
  * @property \Kanboard\Helper\FormHelper              $form
  * @property \Kanboard\Helper\HookHelper              $hook
  * @property \Kanboard\Helper\ICalHelper              $ical
+ * @property \Kanboard\Helper\ModalHelper             $modal
  * @property \Kanboard\Helper\ModelHelper             $model
  * @property \Kanboard\Helper\SubtaskHelper           $subtask
  * @property \Kanboard\Helper\TaskHelper              $task

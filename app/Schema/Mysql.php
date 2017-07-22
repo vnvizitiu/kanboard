@@ -2,11 +2,68 @@
 
 namespace Schema;
 
+require_once __DIR__.'/Migration.php';
+
 use PDO;
 use Kanboard\Core\Security\Token;
 use Kanboard\Core\Security\Role;
 
-const VERSION = 116;
+const VERSION = 124;
+
+function version_124(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE projects ADD COLUMN predefined_email_subjects TEXT');
+}
+
+function version_123(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE column_has_move_restrictions ADD COLUMN only_assigned TINYINT(1) DEFAULT 0');
+}
+
+function version_122(PDO $pdo)
+{
+    migrate_default_swimlane($pdo);
+
+    $pdo->exec('ALTER TABLE `projects` DROP COLUMN `default_swimlane`');
+    $pdo->exec('ALTER TABLE `projects` DROP COLUMN `show_default_swimlane`');
+    $pdo->exec('ALTER TABLE `tasks` MODIFY `swimlane_id` INT(11) NOT NULL;');
+    $pdo->exec('ALTER TABLE tasks ADD CONSTRAINT tasks_swimlane_ibfk_1 FOREIGN KEY (swimlane_id) REFERENCES swimlanes(id) ON DELETE CASCADE');
+}
+
+function version_121(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE projects ADD COLUMN email VARCHAR(255)');
+}
+
+function version_120(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE invites (
+            email VARCHAR(255) NOT NULL,
+            project_id INTEGER NOT NULL,
+            token VARCHAR(255) NOT NULL,
+            PRIMARY KEY(email, token)
+        ) ENGINE=InnoDB CHARSET=utf8
+    ");
+
+    $pdo->exec("DELETE FROM settings WHERE `option`='application_datetime_format'");
+}
+
+function version_119(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE `comments` ADD COLUMN `date_modification` BIGINT(20)');
+    $pdo->exec('UPDATE `comments` SET `date_modification` = `date_creation` WHERE `date_modification` IS NULL');
+}
+
+function version_118(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE `users` ADD COLUMN `api_access_token` VARCHAR(255) DEFAULT NULL');
+}
+
+function version_117(PDO $pdo)
+{
+    $pdo->exec("ALTER TABLE `settings` MODIFY `value` TEXT");
+}
 
 function version_116(PDO $pdo)
 {
@@ -53,9 +110,9 @@ function version_113(PDO $pdo)
     $pdo->exec("
         CREATE TABLE project_has_roles (
             role_id INT NOT NULL AUTO_INCREMENT,
-            role VARCHAR(255) NOT NULL,
+            `role` VARCHAR(255) NOT NULL,
             project_id INT NOT NULL,
-            UNIQUE(project_id, role),
+            UNIQUE(project_id, `role`),
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
             PRIMARY KEY(role_id)
         ) ENGINE=InnoDB CHARSET=utf8

@@ -106,6 +106,22 @@ class ProjectModel extends Base
     }
 
     /**
+     * Get a project by the email address
+     *
+     * @access public
+     * @param  string  $email
+     * @return array|boolean
+     */
+    public function getByEmail($email)
+    {
+        if (empty($email)) {
+            return false;
+        }
+
+        return $this->db->table(self::TABLE)->eq('email', $email)->findOne();
+    }
+
+    /**
      * Fetch project data by using the token
      *
      * @access public
@@ -186,16 +202,23 @@ class ProjectModel extends Base
      * Return the list of all projects
      *
      * @access public
-     * @param  bool     $prepend   If true, prepend to the list the value 'None'
+     * @param  bool $prependNone
+     * @param  bool $noPrivateProjects
      * @return array
      */
-    public function getList($prepend = true)
+    public function getList($prependNone = true, $noPrivateProjects = true)
     {
-        if ($prepend) {
-            return array(t('None')) + $this->db->hashtable(self::TABLE)->asc('name')->getAll('id', 'name');
+        if ($noPrivateProjects) {
+            $projects = $this->db->hashtable(self::TABLE)->eq('is_private', 0)->asc('name')->getAll('id', 'name');
+        } else {
+            $projects = $this->db->hashtable(self::TABLE)->asc('name')->getAll('id', 'name');
         }
 
-        return $this->db->hashtable(self::TABLE)->asc('name')->getAll('id', 'name');
+        if ($prependNone) {
+            return array(t('None')) + $projects;
+        }
+
+        return $projects;
     }
 
     /**
@@ -246,32 +269,6 @@ class ProjectModel extends Base
     }
 
     /**
-     * Gather some task metrics for a given project
-     *
-     * @access public
-     * @param  integer    $project_id    Project id
-     * @return array
-     */
-    public function getTaskStats($project_id)
-    {
-        $stats = array();
-        $stats['nb_active_tasks'] = 0;
-        $columns = $this->columnModel->getAll($project_id);
-        $column_stats = $this->boardModel->getColumnStats($project_id);
-
-        foreach ($columns as &$column) {
-            $column['nb_active_tasks'] = isset($column_stats[$column['id']]) ? $column_stats[$column['id']] : 0;
-            $stats['nb_active_tasks'] += $column['nb_active_tasks'];
-        }
-
-        $stats['columns'] = $columns;
-        $stats['nb_tasks'] = $this->taskFinderModel->countByProjectId($project_id);
-        $stats['nb_inactive_tasks'] = $stats['nb_tasks'] - $stats['nb_active_tasks'];
-
-        return $stats;
-    }
-
-    /**
      * Get stats for each column of a project
      *
      * @access public
@@ -280,13 +277,11 @@ class ProjectModel extends Base
      */
     public function getColumnStats(array &$project)
     {
-        $project['columns'] = $this->columnModel->getAll($project['id']);
+        $project['columns'] = $this->columnModel->getAllWithTaskCount($project['id']);
         $project['nb_active_tasks'] = 0;
-        $stats = $this->boardModel->getColumnStats($project['id']);
 
-        foreach ($project['columns'] as &$column) {
-            $column['nb_tasks'] = isset($stats[$column['id']]) ? $stats[$column['id']] : 0;
-            $project['nb_active_tasks'] += $column['nb_tasks'];
+        foreach ($project['columns'] as $column) {
+            $project['nb_active_tasks'] += $column['nb_open_tasks'];
         }
 
         return $project;
@@ -322,30 +317,54 @@ class ProjectModel extends Base
         }
 
         return $this->db
-                    ->table(ProjectModel::TABLE)
-                    ->columns(self::TABLE.'.*', UserModel::TABLE.'.username AS owner_username', UserModel::TABLE.'.name AS owner_name')
-                    ->join(UserModel::TABLE, 'id', 'owner_id')
-                    ->in(self::TABLE.'.id', $project_ids)
-                    ->callback(array($this, 'applyColumnStats'));
+            ->table(ProjectModel::TABLE)
+            ->columns(self::TABLE.'.*', UserModel::TABLE.'.username AS owner_username', UserModel::TABLE.'.name AS owner_name')
+            ->join(UserModel::TABLE, 'id', 'owner_id')
+            ->in(self::TABLE.'.id', $project_ids)
+            ->callback(array($this, 'applyColumnStats'));
+    }
+
+    /**
+     * Get query for list of project without column statistics
+     *
+     * @access public
+     * @param  array $projectIds
+     * @return \PicoDb\Table
+     */
+    public function getQueryByProjectIds(array $projectIds)
+    {
+        if (empty($projectIds)) {
+            return $this->db->table(ProjectModel::TABLE)->eq(ProjectModel::TABLE.'.id', 0);
+        }
+
+        return $this->db
+            ->table(ProjectModel::TABLE)
+            ->columns(self::TABLE.'.*', UserModel::TABLE.'.username AS owner_username', UserModel::TABLE.'.name AS owner_name')
+            ->join(UserModel::TABLE, 'id', 'owner_id')
+            ->in(self::TABLE.'.id', $projectIds);
     }
 
     /**
      * Create a project
      *
      * @access public
-     * @param  array    $values     Form values
-     * @param  integer  $user_id    User who create the project
-     * @param  bool     $add_user   Automatically add the user
-     * @return integer              Project id
+     * @param  array   $values Form values
+     * @param  integer $userId User who create the project
+     * @param  bool    $addUser Automatically add the user
+     * @return int     Project id
      */
-    public function create(array $values, $user_id = 0, $add_user = false)
+    public function create(array $values, $userId = 0, $addUser = false)
     {
+        if (! empty($userId) && ! $this->userModel->exists($userId)) {
+            return false;
+        }
+
         $this->db->startTransaction();
 
         $values['token'] = '';
         $values['last_modified'] = time();
         $values['is_private'] = empty($values['is_private']) ? 0 : 1;
-        $values['owner_id'] = $user_id;
+        $values['owner_id'] = $userId;
 
         if (! empty($values['identifier'])) {
             $values['identifier'] = strtoupper($values['identifier']);
@@ -365,8 +384,13 @@ class ProjectModel extends Base
             return false;
         }
 
-        if ($add_user && $user_id) {
-            $this->projectUserRoleModel->addUser($project_id, $user_id, Role::PROJECT_MANAGER);
+        if (! $this->swimlaneModel->create($project_id, t('Default swimlane'))) {
+            $this->db->cancelTransaction();
+            return false;
+        }
+
+        if ($addUser && $userId) {
+            $this->projectUserRoleModel->addUser($project_id, $userId, Role::PROJECT_MANAGER);
         }
 
         $this->categoryModel->createDefaultCategories($project_id);
@@ -427,6 +451,10 @@ class ProjectModel extends Base
             $values['end_date'] = $this->dateParser->getIsoDate($values['end_date']);
         }
 
+        if (! empty($values['owner_id']) && ! $this->userModel->exists($values['owner_id'])) {
+            return false;
+        }
+
         $this->helper->model->convertIntegerFields($values, array('priority_default', 'priority_start', 'priority_end'));
 
         return $this->exists($values['id']) &&
@@ -442,7 +470,13 @@ class ProjectModel extends Base
      */
     public function remove($project_id)
     {
-        return $this->db->table(self::TABLE)->eq('id', $project_id)->remove();
+        $this->db->startTransaction();
+
+        $this->db->table(TagModel::TABLE)->eq('project_id', $project_id)->remove();
+        $result = $this->db->table(self::TABLE)->eq('id', $project_id)->remove();
+
+        $this->db->closeTransaction();
+        return $result;
     }
 
     /**

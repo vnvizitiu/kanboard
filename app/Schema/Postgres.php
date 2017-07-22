@@ -2,11 +2,69 @@
 
 namespace Schema;
 
+require_once __DIR__.'/Migration.php';
+
 use PDO;
 use Kanboard\Core\Security\Token;
 use Kanboard\Core\Security\Role;
 
-const VERSION = 95;
+const VERSION = 103;
+
+function version_103(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE projects ADD COLUMN predefined_email_subjects TEXT');
+}
+
+function version_102(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE column_has_move_restrictions ADD COLUMN only_assigned BOOLEAN DEFAULT FALSE');
+}
+
+function version_101(PDO $pdo)
+{
+    migrate_default_swimlane($pdo);
+
+    $pdo->exec('ALTER TABLE "projects" DROP COLUMN "default_swimlane"');
+    $pdo->exec('ALTER TABLE "projects" DROP COLUMN "show_default_swimlane"');
+    $pdo->exec('ALTER TABLE "tasks" ALTER COLUMN "swimlane_id" SET NOT NULL');
+    $pdo->exec('ALTER TABLE "tasks" ALTER COLUMN "swimlane_id" DROP DEFAULT');
+    $pdo->exec('ALTER TABLE "tasks" ADD FOREIGN KEY (swimlane_id) REFERENCES swimlanes ON DELETE CASCADE');
+}
+
+function version_100(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "projects" ADD COLUMN email VARCHAR(255)');
+}
+
+function version_99(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE invites (
+            email VARCHAR(255) NOT NULL,
+            project_id INTEGER NOT NULL,
+            token VARCHAR(255) NOT NULL,
+            PRIMARY KEY(email, token)
+        )
+    ");
+
+    $pdo->exec("DELETE FROM settings WHERE \"option\"='application_datetime_format'");
+}
+
+function version_98(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "comments" ADD COLUMN date_modification BIGINT');
+    $pdo->exec('UPDATE "comments" SET date_modification = date_creation WHERE date_modification IS NULL');
+}
+
+function version_97(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "users" ADD COLUMN api_access_token VARCHAR(255) DEFAULT NULL');
+}
+
+function version_96(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "settings" ALTER COLUMN "value" TYPE TEXT');
+}
 
 function version_95(PDO $pdo)
 {

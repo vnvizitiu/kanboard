@@ -3,6 +3,9 @@
 namespace Kanboard\ServiceProvider;
 
 use Kanboard\Console\CronjobCommand;
+use Kanboard\Console\DatabaseMigrationCommand;
+use Kanboard\Console\DatabaseVersionCommand;
+use Kanboard\Console\JobCommand;
 use Kanboard\Console\LocaleComparatorCommand;
 use Kanboard\Console\LocaleSyncCommand;
 use Kanboard\Console\PluginInstallCommand;
@@ -50,11 +53,14 @@ class CommandProvider implements ServiceProviderInterface
         $application->add(new TaskTriggerCommand($container));
         $application->add(new CronjobCommand($container));
         $application->add(new WorkerCommand($container));
+        $application->add(new JobCommand($container));
         $application->add(new ResetPasswordCommand($container));
         $application->add(new ResetTwoFactorCommand($container));
         $application->add(new PluginUpgradeCommand($container));
         $application->add(new PluginInstallCommand($container));
         $application->add(new PluginUninstallCommand($container));
+        $application->add(new DatabaseMigrationCommand($container));
+        $application->add(new DatabaseVersionCommand($container));
 
         $container['cli'] = $application;
         return $container;

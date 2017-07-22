@@ -53,6 +53,37 @@ function array_column_index(array &$input, $column)
 }
 
 /**
+ * Create indexed array from a list of dict with unique values
+ *
+ * $input = [
+ *   ['k1' => 1, 'k2' => 2], ['k1' => 3, 'k2' => 4], ['k1' => 1, 'k2' => 5]
+ * ]
+ *
+ * array_column_index_unique($input, 'k1') will returns:
+ *
+ * [
+ *   1 => ['k1' => 1, 'k2' => 2],
+ *   3 => ['k1' => 3, 'k2' => 4],
+ * ]
+ *
+ * @param  array   $input
+ * @param  string  $column
+ * @return array
+ */
+function array_column_index_unique(array &$input, $column)
+{
+    $result = array();
+
+    foreach ($input as &$row) {
+        if (isset($row[$column]) && ! isset($result[$row[$column]])) {
+            $result[$row[$column]] = $row;
+        }
+    }
+
+    return $result;
+}
+
+/**
  * Sum all values from a single column in the input array
  *
  * $input = [
@@ -102,6 +133,27 @@ function build_app_version($ref, $commit_hash)
     }
 
     return $version;
+}
+
+/**
+ * Get upload max size.
+ *
+ * @return string
+ */
+function get_upload_max_size()
+{
+    return min(ini_get('upload_max_filesize'), ini_get('post_max_size'));
+}
+
+/**
+ * Get file extension
+ *
+ * @param  $filename
+ * @return string
+ */
+function get_file_extension($filename)
+{
+    return strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 }
 
 /**

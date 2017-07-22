@@ -12,17 +12,34 @@ use Kanboard\Core\Base;
  */
 class AppHelper extends Base
 {
+    public function isAjax()
+    {
+        return $this->request->isAjax();
+    }
+
+    /**
+     * Render Javascript component
+     *
+     * @param  string $name
+     * @param  array  $params
+     * @return string
+     */
+    public function component($name, array $params = array())
+    {
+        return '<div class="js-'.$name.'" data-params=\''.json_encode($params, JSON_HEX_APOS).'\'></div>';
+    }
+
     /**
      * Get config variable
      *
      * @access public
      * @param  string $param
-     * @param  mixed  $default_value
+     * @param  mixed  $default
      * @return mixed
      */
-    public function config($param, $default_value = '')
+    public function config($param, $default = '')
     {
-        return $this->configModel->get($param, $default_value);
+        return $this->configModel->get($param, $default);
     }
 
     /**

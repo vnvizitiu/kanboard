@@ -31,6 +31,7 @@ class TaskValidator extends BaseValidator
             new Validators\Range('score', t('This value must be in the range %d to %d', -2147483647, 2147483647), -2147483647, 2147483647),
             new Validators\Integer('category_id', t('This value must be an integer')),
             new Validators\Integer('swimlane_id', t('This value must be an integer')),
+            new Validators\GreaterThan('swimlane_id', t('This value must be greater than %d', 0), 0),
             new Validators\Integer('recurrence_child', t('This value must be an integer')),
             new Validators\Integer('recurrence_parent', t('This value must be an integer')),
             new Validators\Integer('recurrence_factor', t('This value must be an integer')),
@@ -42,7 +43,7 @@ class TaskValidator extends BaseValidator
             new Validators\MaxLength('title', t('The maximum length is %d characters', 200), 200),
             new Validators\MaxLength('reference', t('The maximum length is %d characters', 50), 50),
             new Validators\Date('date_due', t('Invalid date'), $this->dateParser->getParserFormats()),
-            new Validators\Date('date_started', t('Invalid date'), $this->dateParser->getParserFormats()),
+            new Validators\Date('date_started', t('Invalid date'), array($this->dateParser->getUserDateTimeFormat())),
             new Validators\Numeric('time_spent', t('This value must be numeric')),
             new Validators\Numeric('time_estimated', t('This value must be numeric')),
         );
@@ -197,6 +198,29 @@ class TaskValidator extends BaseValidator
         );
 
         $v = new Validator($values, array_merge($rules, $this->commonValidationRules()));
+
+        return array(
+            $v->execute(),
+            $v->getErrors()
+        );
+    }
+
+    /**
+     * Validate task email creation
+     *
+     * @access public
+     * @param  array   $values           Required parameters to save an action
+     * @return array   $valid, $errors   [0] = Success or not, [1] = List of errors
+     */
+    public function validateEmailCreation(array $values)
+    {
+        $rules = array(
+            new Validators\Required('subject', t('This field is required')),
+            new Validators\Required('email', t('This field is required')),
+            new Validators\Email('email', t('Email address invalid')),
+        );
+
+        $v = new Validator($values, $rules);
 
         return array(
             $v->execute(),

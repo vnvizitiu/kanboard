@@ -12,22 +12,22 @@ header
     @include md-device
       @include grid_width(15/100)
     @include sm-device
-      @include grid_width(65/100)
-      order: 2
+      @include grid_width(1)
+      order: 1
+      margin-bottom: 5px
+      .header-creation-menu
+        display: none
 
   .board-selector-container
-    @include grid_width(15/100)
+    @include grid_width(25/100)
     @include md-device
       @include grid_width(20/100)
     @include sm-device
-      @include grid_width(35/100)
-      order: 1
-      margin-bottom: 5px
+      @include grid_width(1)
+      order: 2
 
   .title-container
-    @include grid_width(75/100)
-    @include md-device
-      @include grid_width(65/100)
+    @include grid_width(65/100)
     @include sm-device
       @include grid_width(1)
       order: 3
@@ -38,7 +38,7 @@ header
       opacity: 0.3
       font-size: size('tiny')
 
-.web-notification-icon
+a i.web-notification-icon
   color: link-color('primary')
   &:focus, &:hover
     color: color('dark')

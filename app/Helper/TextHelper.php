@@ -25,6 +25,19 @@ class TextHelper extends Base
     }
 
     /**
+     * Join with HTML escaping
+     *
+     * @param  $glue
+     * @param  array $list
+     * @return string
+     */
+    public function implode($glue, array $list)
+    {
+        array_walk($list, function (&$value) { $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8', false); });
+        return implode($glue, $list);
+    }
+
+    /**
      * Markdown transformation
      *
      * @param  string    $text
@@ -59,6 +72,10 @@ class TextHelper extends Base
      */
     public function bytes($size, $precision = 2)
     {
+        if ($size == 0) {
+            return 0;
+        }
+
         $base = log($size) / log(1024);
         $suffixes = array('', 'k', 'M', 'G', 'T');
 

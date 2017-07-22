@@ -23,11 +23,8 @@ class TaskCreationController extends BaseController
     public function show(array $values = array(), array $errors = array())
     {
         $project = $this->getProject();
-        $swimlanes_list = $this->swimlaneModel->getList($project['id'], false, true);
-
-        if (empty($values)) {
-            $values = $this->prepareValues($swimlanes_list);
-        }
+        $swimlanesList = $this->swimlaneModel->getList($project['id'], false, true);
+        $values += $this->prepareValues($project['is_private'], $swimlanesList);
 
         $values = $this->hook->merge('controller:task:form:default', $values, array('default_values' => $values));
         $values = $this->hook->merge('controller:task-creation:form:default', $values, array('default_values' => $values));
@@ -37,9 +34,9 @@ class TaskCreationController extends BaseController
             'errors' => $errors,
             'values' => $values + array('project_id' => $project['id']),
             'columns_list' => $this->columnModel->getList($project['id']),
-            'users_list' => $this->projectUserRoleModel->getAssignableUsersList($project['id'], true, false, true),
+            'users_list' => $this->projectUserRoleModel->getAssignableUsersList($project['id'], true, false, $project['is_private'] == 1),
             'categories_list' => $this->categoryModel->getList($project['id']),
-            'swimlanes_list' => $swimlanes_list,
+            'swimlanes_list' => $swimlanesList,
         )));
     }
 
@@ -63,8 +60,14 @@ class TaskCreationController extends BaseController
             $this->response->redirect($this->helper->url->to('BoardViewController', 'show', array('project_id' => $project['id'])), true);
         } else {
             $task_id = $this->taskCreationModel->create($values);
-            $this->flash->success(t('Task created successfully.'));
-            $this->afterSave($project, $values, $task_id);
+
+            if ($task_id > 0) {
+                $this->flash->success(t('Task created successfully.'));
+                $this->afterSave($project, $values, $task_id);
+            } else {
+                $this->flash->failure(t('Unable to create this task.'));
+                $this->response->redirect($this->helper->url->to('BoardViewController', 'show', array('project_id' => $project['id'])), true);
+            }
         }
     }
 
@@ -116,17 +119,21 @@ class TaskCreationController extends BaseController
      * Prepare form values
      *
      * @access protected
-     * @param  array $swimlanes_list
+     * @param  bool  $isPrivateProject
+     * @param  array $swimlanesList
      * @return array
      */
-    protected function prepareValues(array $swimlanes_list)
+    protected function prepareValues($isPrivateProject, array $swimlanesList)
     {
         $values = array(
-            'swimlane_id' => $this->request->getIntegerParam('swimlane_id', key($swimlanes_list)),
+            'swimlane_id' => $this->request->getIntegerParam('swimlane_id', key($swimlanesList)),
             'column_id'   => $this->request->getIntegerParam('column_id'),
             'color_id'    => $this->colorModel->getDefaultColor(),
-            'owner_id'    => $this->userSession->getId(),
         );
+
+        if ($isPrivateProject) {
+            $values['owner_id'] = $this->userSession->getId();
+        }
 
         return $values;
     }

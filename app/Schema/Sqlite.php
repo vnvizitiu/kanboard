@@ -2,11 +2,85 @@
 
 namespace Schema;
 
+require_once __DIR__.'/Migration.php';
+
 use Kanboard\Core\Security\Token;
 use Kanboard\Core\Security\Role;
 use PDO;
 
-const VERSION = 107;
+const VERSION = 115;
+
+function version_115(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE projects ADD COLUMN predefined_email_subjects TEXT');
+}
+
+function version_114(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE column_has_move_restrictions ADD COLUMN only_assigned INTEGER DEFAULT 0');
+}
+
+function version_113(PDO $pdo)
+{
+    $pdo->exec(
+        'ALTER TABLE project_activities RENAME TO project_activities_bak'
+    );
+    $pdo->exec("
+      CREATE TABLE project_activities (
+          id INTEGER PRIMARY KEY,
+          date_creation INTEGER NOT NULL,
+          event_name TEXT NOT NULL,
+          creator_id INTEGER NOT NULL,
+          project_id INTEGER NOT NULL,
+          task_id INTEGER NOT NULL,
+          data TEXT,
+          FOREIGN KEY(creator_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+          FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      )
+    ");
+    $pdo->exec(
+        'INSERT INTO project_activities SELECT * FROM project_activities_bak'
+    );
+    $pdo->exec(
+        'DROP TABLE project_activities_bak'
+    );
+}
+
+function version_112(PDO $pdo)
+{
+    migrate_default_swimlane($pdo);
+}
+
+function version_111(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE "projects" ADD COLUMN email TEXT');
+}
+
+function version_110(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE invites (
+            email TEXT NOT NULL,
+            project_id INTEGER NOT NULL,
+            token TEXT NOT NULL,
+            PRIMARY KEY(email, token)
+        )
+    ");
+
+    $pdo->exec("DELETE FROM settings WHERE \"option\"='application_datetime_format'");
+}
+
+function version_109(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE comments ADD COLUMN date_modification INTEGER');
+    $pdo->exec('UPDATE comments SET date_modification = date_creation WHERE date_modification IS NULL;');
+}
+
+function version_108(PDO $pdo)
+{
+    $pdo->exec('ALTER TABLE users ADD COLUMN api_access_token VARCHAR(255) DEFAULT NULL');
+}
 
 function version_107(PDO $pdo)
 {
@@ -914,7 +988,7 @@ function version_33(PDO $pdo)
             id INTEGER PRIMARY KEY,
             date_creation INTEGER NOT NULL,
             event_name TEXT NOT NULL,
-            creator_id INTEGE NOT NULL,
+            creator_id INTEGER NOT NULL,
             project_id INTEGER NOT NULL,
             task_id INTEGER NOT NULL,
             data TEXT,

@@ -35,6 +35,45 @@ CREATE TABLE `actions` (
   CONSTRAINT `actions_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `column_has_move_restrictions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `column_has_move_restrictions` (
+  `restriction_id` int(11) NOT NULL AUTO_INCREMENT,
+  `project_id` int(11) NOT NULL,
+  `role_id` int(11) NOT NULL,
+  `src_column_id` int(11) NOT NULL,
+  `dst_column_id` int(11) NOT NULL,
+  `only_assigned` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`restriction_id`),
+  UNIQUE KEY `role_id` (`role_id`,`src_column_id`,`dst_column_id`),
+  KEY `project_id` (`project_id`),
+  KEY `src_column_id` (`src_column_id`),
+  KEY `dst_column_id` (`dst_column_id`),
+  CONSTRAINT `column_has_move_restrictions_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `column_has_move_restrictions_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `project_has_roles` (`role_id`) ON DELETE CASCADE,
+  CONSTRAINT `column_has_move_restrictions_ibfk_3` FOREIGN KEY (`src_column_id`) REFERENCES `columns` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `column_has_move_restrictions_ibfk_4` FOREIGN KEY (`dst_column_id`) REFERENCES `columns` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `column_has_restrictions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `column_has_restrictions` (
+  `restriction_id` int(11) NOT NULL AUTO_INCREMENT,
+  `project_id` int(11) NOT NULL,
+  `role_id` int(11) NOT NULL,
+  `column_id` int(11) NOT NULL,
+  `rule` varchar(255) NOT NULL,
+  PRIMARY KEY (`restriction_id`),
+  UNIQUE KEY `role_id` (`role_id`,`column_id`,`rule`),
+  KEY `project_id` (`project_id`),
+  KEY `column_id` (`column_id`),
+  CONSTRAINT `column_has_restrictions_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `column_has_restrictions_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `project_has_roles` (`role_id`) ON DELETE CASCADE,
+  CONSTRAINT `column_has_restrictions_ibfk_3` FOREIGN KEY (`column_id`) REFERENCES `columns` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `columns`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -62,6 +101,7 @@ CREATE TABLE `comments` (
   `date_creation` bigint(20) DEFAULT NULL,
   `comment` text,
   `reference` varchar(50) DEFAULT '',
+  `date_modification` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `comments_reference_idx` (`reference`),
@@ -117,6 +157,16 @@ CREATE TABLE `groups` (
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `invites`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `invites` (
+  `email` varchar(255) NOT NULL,
+  `project_id` int(11) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  PRIMARY KEY (`email`,`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `last_logins`;
@@ -260,7 +310,7 @@ DROP TABLE IF EXISTS `project_has_groups`;
 CREATE TABLE `project_has_groups` (
   `group_id` int(11) NOT NULL,
   `project_id` int(11) NOT NULL,
-  `role` varchar(25) NOT NULL,
+  `role` varchar(255) NOT NULL,
   UNIQUE KEY `group_id` (`group_id`,`project_id`),
   KEY `project_id` (`project_id`),
   CONSTRAINT `project_has_groups_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE CASCADE,
@@ -292,17 +342,44 @@ CREATE TABLE `project_has_notification_types` (
   CONSTRAINT `project_has_notification_types_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `project_has_roles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `project_has_roles` (
+  `role_id` int(11) NOT NULL AUTO_INCREMENT,
+  `role` varchar(255) NOT NULL,
+  `project_id` int(11) NOT NULL,
+  PRIMARY KEY (`role_id`),
+  UNIQUE KEY `project_id` (`project_id`,`role`),
+  CONSTRAINT `project_has_roles_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `project_has_users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `project_has_users` (
   `project_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `role` varchar(25) NOT NULL DEFAULT 'project-viewer',
+  `role` varchar(255) NOT NULL,
   UNIQUE KEY `idx_project_user` (`project_id`,`user_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `project_has_users_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
   CONSTRAINT `project_has_users_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `project_role_has_restrictions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `project_role_has_restrictions` (
+  `restriction_id` int(11) NOT NULL AUTO_INCREMENT,
+  `project_id` int(11) NOT NULL,
+  `role_id` int(11) NOT NULL,
+  `rule` varchar(255) NOT NULL,
+  PRIMARY KEY (`restriction_id`),
+  UNIQUE KEY `role_id` (`role_id`,`rule`),
+  KEY `project_id` (`project_id`),
+  CONSTRAINT `project_role_has_restrictions_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `project_role_has_restrictions_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `project_has_roles` (`role_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `projects`;
@@ -317,8 +394,6 @@ CREATE TABLE `projects` (
   `is_public` tinyint(1) DEFAULT '0',
   `is_private` tinyint(1) DEFAULT '0',
   `is_everybody_allowed` tinyint(1) DEFAULT '0',
-  `default_swimlane` varchar(200) DEFAULT 'Default swimlane',
-  `show_default_swimlane` int(11) DEFAULT '1',
   `description` text,
   `identifier` varchar(50) DEFAULT '',
   `start_date` varchar(10) DEFAULT '',
@@ -327,6 +402,7 @@ CREATE TABLE `projects` (
   `priority_default` int(11) DEFAULT '0',
   `priority_start` int(11) DEFAULT '0',
   `priority_end` int(11) DEFAULT '3',
+  `email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -359,7 +435,7 @@ DROP TABLE IF EXISTS `settings`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `settings` (
   `option` varchar(100) NOT NULL,
-  `value` varchar(255) DEFAULT '',
+  `value` text,
   `changed_by` int(11) NOT NULL DEFAULT '0',
   `changed_on` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`option`)
@@ -527,7 +603,7 @@ CREATE TABLE `tasks` (
   `date_started` bigint(20) DEFAULT NULL,
   `time_spent` float DEFAULT '0',
   `time_estimated` float DEFAULT '0',
-  `swimlane_id` int(11) DEFAULT '0',
+  `swimlane_id` int(11) NOT NULL,
   `date_moved` bigint(20) DEFAULT NULL,
   `recurrence_status` int(11) NOT NULL DEFAULT '0',
   `recurrence_trigger` int(11) NOT NULL DEFAULT '0',
@@ -537,13 +613,17 @@ CREATE TABLE `tasks` (
   `recurrence_parent` int(11) DEFAULT NULL,
   `recurrence_child` int(11) DEFAULT NULL,
   `priority` int(11) DEFAULT '0',
+  `external_provider` varchar(255) DEFAULT NULL,
+  `external_uri` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_task_active` (`is_active`),
   KEY `column_id` (`column_id`),
   KEY `tasks_reference_idx` (`reference`),
   KEY `tasks_project_idx` (`project_id`),
+  KEY `tasks_swimlane_ibfk_1` (`swimlane_id`),
   CONSTRAINT `tasks_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `tasks_ibfk_2` FOREIGN KEY (`column_id`) REFERENCES `columns` (`id`) ON DELETE CASCADE
+  CONSTRAINT `tasks_ibfk_2` FOREIGN KEY (`column_id`) REFERENCES `columns` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `tasks_swimlane_ibfk_1` FOREIGN KEY (`swimlane_id`) REFERENCES `swimlanes` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `transitions`;
@@ -648,6 +728,7 @@ CREATE TABLE `users` (
   `role` varchar(25) NOT NULL DEFAULT 'app-user',
   `is_active` tinyint(1) DEFAULT '1',
   `avatar_path` varchar(255) DEFAULT NULL,
+  `api_access_token` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_username_idx` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -671,7 +752,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES ('api_token','4064ef3d26efa9a0ff78fa7067d8bb9d99323455128edd89e9dc7c53ed76',0,0),('application_currency','USD',0,0),('application_date_format','m/d/Y',0,0),('application_language','en_US',0,0),('application_stylesheet','',0,0),('application_timezone','UTC',0,0),('application_url','',0,0),('board_columns','',0,0),('board_highlight_period','172800',0,0),('board_private_refresh_interval','10',0,0),('board_public_refresh_interval','60',0,0),('calendar_project_tasks','date_started',0,0),('calendar_user_subtasks_time_tracking','0',0,0),('calendar_user_tasks','date_started',0,0),('cfd_include_closed_tasks','1',0,0),('default_color','yellow',0,0),('integration_gravatar','0',0,0),('password_reset','1',0,0),('project_categories','',0,0),('subtask_restriction','0',0,0),('subtask_time_tracking','1',0,0),('webhook_token','c8f53c0bcd8aead902ad04f180ffafd7889b9c0062c2d510e2297ef543b8',0,0),('webhook_url','',0,0);
+INSERT INTO `settings` VALUES ('api_token','7b7306fb38aa10046043df6e9631f51193ef58dc14b0b62836d00b2bb03e',0,0),('application_currency','USD',0,0),('application_date_format','m/d/Y',0,0),('application_language','en_US',0,0),('application_stylesheet','',0,0),('application_timezone','UTC',0,0),('application_url','',0,0),('board_columns','',0,0),('board_highlight_period','172800',0,0),('board_private_refresh_interval','10',0,0),('board_public_refresh_interval','60',0,0),('calendar_project_tasks','date_started',0,0),('calendar_user_subtasks_time_tracking','0',0,0),('calendar_user_tasks','date_started',0,0),('cfd_include_closed_tasks','1',0,0),('default_color','yellow',0,0),('integration_gravatar','0',0,0),('password_reset','1',0,0),('project_categories','',0,0),('subtask_restriction','0',0,0),('subtask_time_tracking','1',0,0),('webhook_token','384d5b69ffd7315f2cf1eef2c170b5ed0dbf6d2a2e63462e39dca5d24db2',0,0),('webhook_url','',0,0);
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -700,4 +781,4 @@ UNLOCK TABLES;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
-INSERT INTO users (username, password, role) VALUES ('admin', '$2y$10$yUJ9QnhG.f47yO.YvWKo3eMAHULukpluDNTOF9.Z7QQg0vOfFRB6u', 'app-admin');INSERT INTO schema_version VALUES ('112');
+INSERT INTO users (username, password, role) VALUES ('admin', '$2y$10$0WR8YPAwOCrDQTRFjji6u.krMgA4PcVsmw3ypmXAkqFKFLwnFOpAG', 'app-admin');INSERT INTO schema_version VALUES ('123');

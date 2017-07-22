@@ -1,4 +1,7 @@
 <!-- column titles -->
+
+<?= $this->hook->render('template:board:table:column:before-header-row', array('swimlane' => $swimlane)) ?>
+
 <tr class="board-swimlane-columns-<?= $swimlane['id'] ?>">
     <?php foreach ($swimlane['columns'] as $column): ?>
     <th class="board-column-header board-column-header-<?= $column['id'] ?>" data-column-id="<?= $column['id'] ?>">
@@ -14,7 +17,7 @@
         <div class="board-column-expanded">
             <?php if (! $not_editable && $this->projectRole->canCreateTaskInColumn($column['project_id'], $column['id'])): ?>
                 <div class="board-add-icon">
-                    <?= $this->url->link('+', 'TaskCreationController', 'show', array('project_id' => $column['project_id'], 'column_id' => $column['id'], 'swimlane_id' => $swimlane['id']), false, 'popover', t('Add a new task')) ?>
+                    <?= $this->modal->largeIcon('plus', t('Add a new task'), 'TaskCreationController', 'show', array('project_id' => $column['project_id'], 'column_id' => $column['id'], 'swimlane_id' => $swimlane['id'])) ?>
                 </div>
             <?php endif ?>
 
@@ -37,15 +40,13 @@
                             </li>
                             <?php if ($this->projectRole->canCreateTaskInColumn($column['project_id'], $column['id'])): ?>
                                 <li>
-                                    <i class="fa fa-align-justify fa-fw" aria-hidden="true"></i>
-                                    <?= $this->url->link(t('Create tasks in bulk'), 'TaskBulkController', 'show', array('project_id' => $column['project_id'], 'column_id' => $column['id'], 'swimlane_id' => $swimlane['id']), false, 'popover') ?>
+                                    <?= $this->modal->medium('align-justify', t('Create tasks in bulk'), 'TaskBulkController', 'show', array('project_id' => $column['project_id'], 'column_id' => $column['id'], 'swimlane_id' => $swimlane['id'])) ?>
                                 </li>
                             <?php endif ?>
 
                             <?php if ($column['nb_tasks'] > 0 && $this->projectRole->canChangeTaskStatusInColumn($column['project_id'], $column['id'])): ?>
                                 <li>
-                                    <i class="fa fa-close fa-fw"></i>
-                                    <?= $this->url->link(t('Close all tasks of this column'), 'BoardPopoverController', 'confirmCloseColumnTasks', array('project_id' => $column['project_id'], 'column_id' => $column['id'], 'swimlane_id' => $swimlane['id']), false, 'popover') ?>
+                                    <?= $this->modal->confirm('close', t('Close all tasks of this column'), 'BoardPopoverController', 'confirmCloseColumnTasks', array('project_id' => $column['project_id'], 'column_id' => $column['id'], 'swimlane_id' => $swimlane['id'])) ?>
                                 </li>
                             <?php endif ?>
 
@@ -55,17 +56,26 @@
                 <?php endif ?>
             </span>
 
-            <?php if (! $not_editable && ! empty($column['description'])): ?>
-                <span class="tooltip pull-right" title="<?= $this->text->markdownAttribute($column['description']) ?>">
-                    &nbsp;<i class="fa fa-info-circle"></i>
-                </span>
-            <?php endif ?>
+            <span class="pull-right">
+                <?php if ($swimlane['nb_swimlanes'] > 1 && ! empty($column['column_score'])): ?>
+                    <span title="<?= t('Total score in this column across all swimlanes') ?>">
+                        (<span><?= $column['column_score'] ?></span>)
+                    </span>
+                <?php endif ?>
 
-            <?php if (! empty($column['score'])): ?>
-                <span class="pull-right" title="<?= t('Score') ?>">
-                    <?= $column['score'] ?>
-                </span>
-            <?php endif ?>
+                <?php if (! empty($column['score'])): ?>
+                    <span title="<?= t('Score') ?>">
+                        <?= $column['score'] ?>
+                    </span>
+                <?php endif ?>
+
+                <?php if (! $not_editable && ! empty($column['description'])): ?>
+                    <span class="tooltip" title="<?= $this->text->markdownAttribute($column['description']) ?>">
+                        &nbsp;<i class="fa fa-info-circle"></i>
+                    </span>
+                <?php endif ?>
+
+            </span>
 
             <?php if ($column['task_limit']): ?>
                 <span title="<?= t('Task limit') ?>">
@@ -76,8 +86,11 @@
                     (<span id="task-number-column-<?= $column['id'] ?>"><?= $column['nb_tasks'] ?></span>)
                 </span>
             <?php endif ?>
+	    <?= $this->hook->render('template:board:column:header', array('swimlane' => $swimlane, 'column' => $column)) ?> 
         </div>
 
     </th>
     <?php endforeach ?>
 </tr>
+
+<?= $this->hook->render('template:board:table:column:after-header-row', array('swimlane' => $swimlane)) ?>

@@ -1,8 +1,10 @@
-<div class="page-header">
-    <h2><?= t('Estimated vs actual time') ?></h2>
-</div>
+<?php if (! $is_ajax): ?>
+    <div class="page-header">
+        <h2><?= t('Estimated vs actual time') ?></h2>
+    </div>
+<?php endif ?>
 
-<div class="listing">
+<div class="panel">
     <ul>
         <li><?= t('Estimated hours: ').'<strong>'.$this->text->e($metrics['open']['time_estimated'] + $metrics['closed']['time_estimated']) ?></strong></li>
         <li><?= t('Actual hours: ').'<strong>'.$this->text->e($metrics['open']['time_spent'] + $metrics['closed']['time_spent']) ?></strong></li>
@@ -15,21 +17,21 @@
     <?php if ($paginator->isEmpty()): ?>
         <p class="alert"><?= t('No tasks found.') ?></p>
     <?php elseif (! $paginator->isEmpty()): ?>
-        <chart-project-time-comparison
-            :metrics='<?= json_encode($metrics, JSON_HEX_APOS)?>'
-            label-spent="<?= t('Hours Spent') ?>"
-            label-estimated="<?= t('Hours Estimated') ?>"
-            label-closed="<?= t('Closed') ?>"
-            label-open="<?= t('Open') ?>">
-        </chart-project-time-comparison>
+        <?= $this->app->component('chart-project-time-comparison', array(
+            'metrics' => $metrics,
+            'labelSpent' => t('Hours Spent'),
+            'labelEstimated' => t('Hours Estimated'),
+            'labelClosed' => t('Closed'),
+            'labelOpen' => t('Open'),
+        )) ?>
 
         <table class="table-fixed table-small table-scrolling">
             <tr>
                 <th class="column-5"><?= $paginator->order(t('Id'), 'tasks.id') ?></th>
                 <th><?= $paginator->order(t('Title'), 'tasks.title') ?></th>
-                <th class="column-5"><?= $paginator->order(t('Status'), 'tasks.is_active') ?></th>
-                <th class="column-10"><?= $paginator->order(t('Estimated Time'), 'tasks.time_estimated') ?></th>
-                <th class="column-10"><?= $paginator->order(t('Actual Time'), 'tasks.time_spent') ?></th>
+                <th class="column-10"><?= $paginator->order(t('Status'), 'tasks.is_active') ?></th>
+                <th class="column-12"><?= $paginator->order(t('Estimated Time'), 'tasks.time_estimated') ?></th>
+                <th class="column-12"><?= $paginator->order(t('Actual Time'), 'tasks.time_spent') ?></th>
             </tr>
             <?php foreach ($paginator->getCollection() as $task): ?>
             <tr>

@@ -40,34 +40,28 @@ class TaskHelper extends Base
         return $this->taskRecurrenceModel->getRecurrenceBasedateList();
     }
 
-    public function selectTitle(array $values, array $errors)
+    public function renderTitleField(array $values, array $errors)
     {
-        $html = $this->helper->form->label(t('Title'), 'title');
-        $html .= $this->helper->form->text('title', $values, $errors, array('autofocus', 'required', 'maxlength="200"', 'tabindex="1"'), 'form-input-large');
-        return $html;
-    }
-
-    public function selectDescription(array $values, array $errors)
-    {
-        $html = $this->helper->form->label(t('Description'), 'description');
-        $html .= '<div class="markdown-editor-container">';
-        $html .= $this->helper->form->textarea(
-            'description',
+        return $this->helper->form->text(
+            'title',
             $values,
             $errors,
             array(
-                'placeholder="'.t('Leave a description').'"',
-                'tabindex="2"',
-                'data-mention-search-url="'.$this->helper->url->href('UserAjaxController', 'mention', array('project_id' => $values['project_id'])).'"'
-            ),
-            'markdown-editor'
+                'autofocus',
+                'required',
+                'maxlength="200"',
+                'tabindex="1"',
+                'placeholder="'.t('Title').'"'
+            )
         );
-
-        $html .= '</div>';
-        return $html;
     }
 
-    public function selectTags(array $project, array $tags = array())
+    public function renderDescriptionField(array $values, array $errors)
+    {
+        return $this->helper->form->textEditor('description', $values, $errors, array('tabindex' => 2));
+    }
+
+    public function renderTagField(array $project, array $tags = array())
     {
         $options = $this->tagModel->getAssignableList($project['id']);
 
@@ -89,7 +83,7 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectColor(array $values)
+    public function renderColorField(array $values)
     {
         $colors = $this->colorModel->getList();
         $html = $this->helper->form->label(t('Color'), 'color_id');
@@ -97,8 +91,12 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectAssignee(array $users, array $values, array $errors = array(), array $attributes = array())
+    public function renderAssigneeField(array $users, array $values, array $errors = array(), array $attributes = array())
     {
+        if (isset($values['project_id']) && ! $this->helper->projectRole->canChangeAssignee($values)) {
+            return '';
+        }
+
         $attributes = array_merge(array('tabindex="3"'), $attributes);
 
         $html = $this->helper->form->label(t('Assignee'), 'owner_id');
@@ -111,7 +109,7 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectCategory(array $categories, array $values, array $errors = array(), array $attributes = array(), $allow_one_item = false)
+    public function renderCategoryField(array $categories, array $values, array $errors = array(), array $attributes = array(), $allow_one_item = false)
     {
         $attributes = array_merge(array('tabindex="4"'), $attributes);
         $html = '';
@@ -124,12 +122,12 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectSwimlane(array $swimlanes, array $values, array $errors = array(), array $attributes = array())
+    public function renderSwimlaneField(array $swimlanes, array $values, array $errors = array(), array $attributes = array())
     {
         $attributes = array_merge(array('tabindex="5"'), $attributes);
         $html = '';
 
-        if (! (count($swimlanes) === 1 && key($swimlanes) == 0)) {
+        if (count($swimlanes) > 1) {
             $html .= $this->helper->form->label(t('Swimlane'), 'swimlane_id');
             $html .= $this->helper->form->select('swimlane_id', $swimlanes, $values, $errors, $attributes);
         }
@@ -137,7 +135,7 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectColumn(array $columns, array $values, array $errors = array(), array $attributes = array())
+    public function renderColumnField(array $columns, array $values, array $errors = array(), array $attributes = array())
     {
         $attributes = array_merge(array('tabindex="6"'), $attributes);
 
@@ -147,25 +145,21 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectPriority(array $project, array $values)
+    public function renderPriorityField(array $project, array $values)
     {
-        $html = '';
+        $range = range($project['priority_start'], $project['priority_end']);
+        $options = array_combine($range, $range);
+        $values += array('priority' => $project['priority_default']);
 
-        if ($project['priority_end'] != $project['priority_start']) {
-            $range = range($project['priority_start'], $project['priority_end']);
-            $options = array_combine($range, $range);
-            $values += array('priority' => $project['priority_default']);
-
-            $html .= $this->helper->form->label(t('Priority'), 'priority');
-            $html .= $this->helper->form->select('priority', $options, $values, array(), array('tabindex="7"'));
-        }
+        $html = $this->helper->form->label(t('Priority'), 'priority');
+        $html .= $this->helper->form->select('priority', $options, $values, array(), array('tabindex="7"'));
 
         return $html;
     }
 
-    public function selectScore(array $values, array $errors = array(), array $attributes = array())
+    public function renderScoreField(array $values, array $errors = array(), array $attributes = array())
     {
-        $attributes = array_merge(array('tabindex="8"'), $attributes);
+        $attributes = array_merge(array('tabindex="13"'), $attributes);
 
         $html = $this->helper->form->label(t('Complexity'), 'score');
         $html .= $this->helper->form->number('score', $values, $errors, $attributes);
@@ -173,9 +167,9 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectReference(array $values, array $errors = array(), array $attributes = array())
+    public function renderReferenceField(array $values, array $errors = array(), array $attributes = array())
     {
-        $attributes = array_merge(array('tabindex="9"'), $attributes);
+        $attributes = array_merge(array('tabindex="14"'), $attributes);
 
         $html = $this->helper->form->label(t('Reference'), 'reference');
         $html .= $this->helper->form->text('reference', $values, $errors, $attributes, 'form-input-small');
@@ -183,9 +177,9 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectTimeEstimated(array $values, array $errors = array(), array $attributes = array())
+    public function renderTimeEstimatedField(array $values, array $errors = array(), array $attributes = array())
     {
-        $attributes = array_merge(array('tabindex="10"'), $attributes);
+        $attributes = array_merge(array('tabindex="11"'), $attributes);
 
         $html = $this->helper->form->label(t('Original estimate'), 'time_estimated');
         $html .= $this->helper->form->numeric('time_estimated', $values, $errors, $attributes);
@@ -194,9 +188,9 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectTimeSpent(array $values, array $errors = array(), array $attributes = array())
+    public function renderTimeSpentField(array $values, array $errors = array(), array $attributes = array())
     {
-        $attributes = array_merge(array('tabindex="11"'), $attributes);
+        $attributes = array_merge(array('tabindex="12"'), $attributes);
 
         $html = $this->helper->form->label(t('Time spent'), 'time_spent');
         $html .= $this->helper->form->numeric('time_spent', $values, $errors, $attributes);
@@ -205,27 +199,23 @@ class TaskHelper extends Base
         return $html;
     }
 
-    public function selectStartDate(array $values, array $errors = array(), array $attributes = array())
+    public function renderStartDateField(array $values, array $errors = array(), array $attributes = array())
     {
-        $attributes = array_merge(array('tabindex="12"'), $attributes);
+        $attributes = array_merge(array('tabindex="10"'), $attributes);
         return $this->helper->form->datetime(t('Start Date'), 'date_started', $values, $errors, $attributes);
     }
 
-    public function selectDueDate(array $values, array $errors = array(), array $attributes = array())
+    public function renderDueDateField(array $values, array $errors = array(), array $attributes = array())
     {
-        $attributes = array_merge(array('tabindex="13"'), $attributes);
-        return $this->helper->form->date(t('Due Date'), 'date_due', $values, $errors, $attributes);
+        $attributes = array_merge(array('tabindex="9"'), $attributes);
+        return $this->helper->form->datetime(t('Due Date'), 'date_due', $values, $errors, $attributes);
     }
 
-    public function formatPriority(array $project, array $task)
+    public function renderPriority($priority)
     {
-        $html = '';
-
-        if ($project['priority_end'] != $project['priority_start']) {
-            $html .= '<span class="task-board-priority" title="'.t('Task priority').'">';
-            $html .= $task['priority'] >= 0 ? 'P'.$task['priority'] : '-P'.abs($task['priority']);
-            $html .= '</span>';
-        }
+        $html = '<span class="task-priority" title="'.t('Task priority').'">';
+        $html .= $this->helper->text->e($priority >= 0 ? 'P'.$priority : '-P'.abs($priority));
+        $html .= '</span>';
 
         return $html;
     }
@@ -257,7 +247,7 @@ class TaskHelper extends Base
                 'step1',
                 array('project_id' => $projectId, 'swimlane_id' => $swimlaneId, 'column_id' => $columnId, 'provider_name' => $providerName),
                 false,
-                'popover-link'
+                'js-modal-replace'
             );
 
             $html .= '<li><i class="fa fa-fw fa-plus-square" aria-hidden="true"></i> '.$link.'</li>';

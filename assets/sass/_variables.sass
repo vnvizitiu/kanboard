@@ -4,7 +4,7 @@ $md-device-width: 1150px
 
 $colors: ('primary': #333, 'light': #999, 'lighter': #dedede, 'dark': #000, 'medium': #555, 'error': #b94a48)
 $link-colors: ('primary': #3366CC, 'focus': #DF5353, 'hover': #333)
-$background-colors: ('primary': #fbfbfb, 'light': #fcfcfc, 'lighter': #fefefe)
+$background-colors: ('primary': #fbfbfb, 'light': #fcfcfc, 'lighter': #fefefe, 'default': #ffffff)
 
 $alert-colors: ('default': #c09853, 'success': #468847, 'error': #b94a48, 'info': #3a87ad, 'normal': #333)
 $alert-background-colors: ('default': #fcf8e3, 'success': #dff0d8, 'error': #f2dede, 'info': #d9edf7, 'normal': #f0f0f0)
@@ -18,6 +18,10 @@ $button-hover-background-colors: ('default': #fafafa, 'red': #c53727, 'blue': #3
 $button-hover-border-colors: ('default': #bbb, 'red': #b0281a, 'blue': #3079ed)
 
 $font-sizes: ('normal': 1.0em, 'tiny': 0.7em, 'small': 0.8em, 'compact': 0.9em, 'medium': 1.2em, 'large': 1.4em, 'xlarge': 1.6em, 'title': 1.5em)
+
+$icon-colors: ('success': #468847, 'error': #b94a48)
+
+$highlight-colors: ('background': #FFF8DC, 'border': #ffeb8e)
 
 $text-font: 'Helvetica Neue', Helvetica, Arial, sans-serif
 $board-task-limit-color: #DF5353
@@ -33,6 +37,9 @@ $board-task-limit-color: #DF5353
 
 @function bg-color($key: 'primary')
   @return map-get($background-colors, $key)
+
+@function icon-color($key)
+  @return map-get($icon-colors, $key)
 
 @function alert-color($key)
   @return map-get($alert-colors, $key)

@@ -62,19 +62,53 @@ class ProjectPermissionModel extends Base
             ->withFilter(new ProjectUserRoleProjectFilter($project_id))
             ->withFilter(new ProjectUserRoleUsernameFilter($input))
             ->getQuery()
-            ->findAllByColumn('username');
+            ->columns(
+                UserModel::TABLE.'.id',
+                UserModel::TABLE.'.username',
+                UserModel::TABLE.'.name',
+                UserModel::TABLE.'.email',
+                UserModel::TABLE.'.avatar_path'
+            )
+            ->findAll();
 
         $groupMembers = $this->projectGroupRoleQuery
             ->withFilter(new ProjectGroupRoleProjectFilter($project_id))
             ->withFilter(new ProjectGroupRoleUsernameFilter($input))
             ->getQuery()
-            ->findAllByColumn('username');
+            ->columns(
+                UserModel::TABLE.'.id',
+                UserModel::TABLE.'.username',
+                UserModel::TABLE.'.name',
+                UserModel::TABLE.'.email',
+                UserModel::TABLE.'.avatar_path'
+            )
+            ->findAll();
 
-        $members = array_unique(array_merge($userMembers, $groupMembers));
+        $userMembers = array_column_index_unique($userMembers, 'username');
+        $groupMembers = array_column_index_unique($groupMembers, 'username');
+        $members = array_merge($userMembers, $groupMembers);
 
-        sort($members);
+        ksort($members);
 
         return $members;
+    }
+
+    public function getMembers($project_id)
+    {
+        $userMembers = $this->projectUserRoleModel->getUsers($project_id);
+        $groupMembers = $this->projectGroupRoleModel->getUsers($project_id);
+
+        $userMembers = array_column_index_unique($userMembers, 'username');
+        $groupMembers = array_column_index_unique($groupMembers, 'username');
+        return array_merge($userMembers, $groupMembers);
+    }
+
+    public function getMembersWithEmail($project_id)
+    {
+        $members = $this->getMembers($project_id);
+        return array_filter($members, function (array $user) {
+            return ! empty($user['email']);
+        });
     }
 
     /**
